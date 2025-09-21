@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
-from db_config import SessionLocal, get_db
+from db_config import get_db
 from models import Client, Product, Employee
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session

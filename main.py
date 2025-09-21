@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException
-from db_config import SessionLocal, get_db
-from models import Client
+from db_config import SessionLocal
+from models import Client, Product, Employee
 from sqlalchemy.future import select
-from typing import Optional
+from datetime import date
 
 app = FastAPI()
 
 
-@app.get("/clients")
+@app.get("/clients", tags=["Client"], summary="Получить клиентов")
 def gets_clients():
     db = SessionLocal()
     try:
@@ -17,7 +17,7 @@ def gets_clients():
         db.close()
 
 
-@app.get("/client/{client_id}")
+@app.get("/client/{client_id}", tags=["Client"], summary="Получить клиента")
 def get_client(id: int):
     db = SessionLocal()
     try:
@@ -31,7 +31,7 @@ def get_client(id: int):
         db.close()
 
 
-@app.post("/client", summary="Добавить клиента")
+@app.post("/client", tags=["Client"], summary="Добавить клиента")
 def add_client(
     client_id: int, name: str, lastname: str, phone: str, email: str, registr_data: str
 ):
@@ -53,13 +53,11 @@ def add_client(
         db.close()
 
 
-@app.delete("/client", summary="Удалить клиента")
+@app.delete("/client", tags=["Client"], summary="Удалить клиента")
 def delete_client(id: int):
     db = SessionLocal()
     try:
         client = db.scalar(select(Client).where(Client.client_id == id))
-        # search = db.execute(select(Client).where(Client.client_id == id))
-        # client = search.scalars().first()
         if client is None:
             raise HTTPException(status_code=404, detail="Client not found")
         db.delete(client)
@@ -68,7 +66,7 @@ def delete_client(id: int):
         db.close()
 
 
-@app.put("/client", summary="Обновить клиента")
+@app.put("/client", tags=["Client"], summary="Обновить клиента")
 def update_client(
     id: int,
     name: str,
@@ -79,9 +77,6 @@ def update_client(
 ):
     db = SessionLocal()
     try:
-        # client = db.scalar(select(Client).where(Client.client_id == id))
-        # res = db.execute(select(Client).where(Client.client_id == id))
-        # client = res.scalar().first()
         client = db.query(Client).filter(Client.client_id == id).first()
         if client is None:
             raise HTTPException(status_code=404, detail="Client not found")
@@ -99,5 +94,171 @@ def update_client(
 
         db.commit()
         db.refresh(client)
+    finally:
+        db.close()
+
+
+@app.get("/product", tags=["Product"], summary="Получить продукты")
+def get_products():
+    db = SessionLocal()
+    try:
+        product = db.query(Product).all()
+        return product
+    finally:
+        db.close()
+
+
+@app.get("/product/{product_id}", tags=["Product"], summary="Получить продукт")
+def get_product(id: int):
+    db = SessionLocal()
+    try:
+        product = db.query(Product).filter(Product.product_id == id).first()
+
+        if product is None:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        return product
+
+    finally:
+        db.close()
+
+
+@app.post("/product", tags=["Product"], summary="Добавить продукт")
+def add_product(
+    product_id: int, product_name: str, description: str, rate: str, term: str
+):
+    db = SessionLocal()
+    try:
+        new_product = Product(
+            product_id=product_id,
+            product_name=product_name,
+            description=description,
+            rate=rate,
+            term=term,
+        )
+        db.add(new_product)
+        db.commit()
+        db.refresh(new_product)
+        return new_product
+    finally:
+        db.close()
+
+
+@app.delete("/product", tags=["Product"], summary="Удалить продукт")
+def delete_product(id: int):
+    db = SessionLocal()
+    try:
+        product = db.query(Product).filter(Product.product_id == id)
+
+        if product is None:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        db.delete(product)
+        db.commit()
+        return product
+    finally:
+        db.close()
+
+
+@app.put("/product", tags=["Product"], summary="Обновить продукт")
+def update_product(id: int, product_name: str, description: str, rate: str, term: str):
+    db = SessionLocal()
+    try:
+        product = db.query(Product).filter(Product.product_id == id)
+
+        if product_name is not None:
+            product_name = product_name
+
+        if description is not None:
+            description = description
+
+        if rate is not None:
+            rate = rate
+
+        if term is not None:
+            term = term
+
+        db.refresh(product)
+        db.commit()
+
+    finally:
+        db.close()
+
+
+@app.get("/employee", tags=["Employee"], summary="Получить сотрудников")
+def get_employees():
+    db = SessionLocal()
+    try:
+        emp = db.query(Employee).all()
+        return emp
+    finally:
+        db.close()
+
+
+@app.get("/employee/{employee_id}", tags=["Employee"], summary="Получить сотрудника")
+def get_employee(id: int):
+    db = SessionLocal()
+    try:
+        emp = db.query(Employee).filter(Employee.employee_id == id)
+
+        if emp is None:
+            raise HTTPException(status_code=404, detail="Employee  not found")
+
+        return emp
+    finally:
+        db.close()
+
+
+@app.post("/employee", tags=["Employee"], summary="Добавить сотрудника")
+def add_employee(employee_id: int, full_name: str, position: str, hire_date: date):
+    db = SessionLocal()
+    try:
+        new_emp = Employee(
+            employee_id=employee_id,
+            full_name=full_name,
+            position=position,
+            hire_date=hire_date,
+        )
+
+        db.add(new_emp)
+        db.commit()
+        db.refresh(new_emp)
+        return new_emp
+    finally:
+        db.close()
+
+
+@app.delete("/employee", tags=["Employee"], summary="Удалить сотрудника")
+def delete_emp(id: int):
+    db = SessionLocal()
+    try:
+        emp = db.query(Employee).filter(Employee.employee_id == id)
+
+        if emp is None:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        db.delete(emp)
+        db.commit()
+        # db.refresh(emp)
+        return emp
+    finally:
+        db.close()
+
+
+@app.put("/employee", tags=["Employee"], summary="Обновить сотрудника")
+def update_emp(id: int, full_name: str, position: str, hire_date: date):
+    db = SessionLocal()
+    try:
+        emp = db.query(Employee).filter(Employee.employee_id == id)
+
+        if full_name is not None:
+            full_name = full_name
+        if position is not None:
+            position = position
+        if hire_date is not None:
+            hire_date = hire_date
+        db.refresh(emp)
+        db.commit()
+        return emp
     finally:
         db.close()

@@ -1,24 +1,24 @@
-from sqlalchemy import Column, Integer, Date, ForeignKey
+from sqlalchemy import Column, Integer, Date, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, MappedColumn
 from db_config import Base
-from datetime import date
+from datetime import date, datetime
 
 
 class Client(Base):
     __tablename__ = "client"
 
-    client_id = Column(Integer, primary_key=True)
+    client_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name: Mapped[str] = MappedColumn()
     lastname: Mapped[str] = MappedColumn()
     phone: Mapped[str] = MappedColumn()
     email: Mapped[str] = MappedColumn()
-    registr_data: Mapped[str] = MappedColumn()
+    registr_date = Column(DateTime(timezone=True), default=datetime.utcnow)
 
 
 class Product(Base):
     __tablename__ = "product"
 
-    product_id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     product_name: Mapped[str] = MappedColumn()
     description: Mapped[str] = MappedColumn()
     rate: Mapped[str] = MappedColumn()
@@ -28,7 +28,7 @@ class Product(Base):
 class Employee(Base):
     __tablename__ = "employee"
 
-    employee_id = Column(Integer, primary_key=True)
+    employee_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     full_name: Mapped[str] = MappedColumn()
     position: Mapped[str] = MappedColumn()
     hire_date: Mapped[date] = MappedColumn(Date)
@@ -59,7 +59,7 @@ class Passport(Base):
 
 
 class Application(Base):
-    __tablename__ = "passport"
+    __tablename__ = "application"
 
     application_id: Mapped[int] = MappedColumn(primary_key=True)
     client_id: Mapped[int] = MappedColumn(ForeignKey("client.client_id"))
@@ -77,9 +77,7 @@ class Account(Base):
     __tablename__ = "account"
 
     account_id: Mapped[int] = MappedColumn(primary_key=True)
-    client_id: Mapped[int] = MappedColumn(
-        ForeignKey("client.client_id"), primary_key=True
-    )
+    client_id: Mapped[int] = MappedColumn(ForeignKey("client.client_id"))
     numver_acc: Mapped[int] = MappedColumn()
     balance: Mapped[int] = MappedColumn()
     currency: Mapped[int] = MappedColumn()

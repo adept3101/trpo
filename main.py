@@ -1,11 +1,21 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from db_config import get_db
 from models import Client, Product, Employee
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from datetime import date
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from schemas import ClientCreate, ProductCreate, EmployeeCreate
+
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
+
+
+# @app.get("/", response_class=HTMLResponse)
+# async def root(request: Request):
+#     return templates.TemplateResponse("main.html", {"request": request})
 
 
 @app.get("/clients", tags=["Client"], summary="Получить клиентов")
@@ -22,22 +32,16 @@ def get_client(id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/client", tags=["Client"], summary="Добавить клиента")
-def add_client(
-    client_id: int,
-    name: str,
-    lastname: str,
-    phone: str,
-    email: str,
-    registr_data: str,
-    db: Session = Depends(get_db),
-):
+def add_client(client: ClientCreate, db: Session = Depends(get_db)):
+    existing = db.query(Client).filter(Client.email == client.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email is used")
+
     new_client = Client(
-        client_id=client_id,
-        name=name,
-        lastname=lastname,
-        phone=phone,
-        email=email,
-        registr_data=registr_data,
+        name=client.name,
+        lastname=client.lastname,
+        phone=client.phone,
+        email=client.email,
     )
     db.add(new_client)
     db.commit()
@@ -100,20 +104,12 @@ def get_product(id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/product", tags=["Product"], summary="Добавить продукт")
-def add_product(
-    product_id: int,
-    product_name: str,
-    description: str,
-    rate: str,
-    term: str,
-    db: Session = Depends(get_db),
-):
+def add_product(product: ProductCreate, db: Session = Depends(get_db)):
     new_product = Product(
-        product_id=product_id,
-        product_name=product_name,
-        description=description,
-        rate=rate,
-        term=term,
+        product_name=product.product_name,
+        description=product.description,
+        rate=product.rate,
+        term=product.term,
     )
     db.add(new_product)
     db.commit()
@@ -177,20 +173,12 @@ def get_employee(id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/employee", tags=["Employee"], summary="Добавить сотрудника")
-def add_employee(
-    employee_id: int,
-    full_name: str,
-    position: str,
-    hire_date: date,
-    db: Session = Depends(get_db),
-):
+def add_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
     new_emp = Employee(
-        employee_id=employee_id,
-        full_name=full_name,
-        position=position,
-        hire_date=hire_date,
+        full_name=employee.full_name,
+        position=employee.position,
+        hire_date=employee.hire_date,
     )
-
     db.add(new_emp)
     db.commit()
     db.refresh(new_emp)

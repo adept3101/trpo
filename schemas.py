@@ -6,7 +6,7 @@ from datetime import datetime
 class ClientCreate(BaseModel):
     name: str = Field(max_length=32, pattern=r"^[а-яА-Яa-zA-Z]+$")
     lastname: str = Field(max_length=32, pattern=r"^[а-яА-Яa-zA-Z]+$")
-    phone: str = Field(pattern=r"^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$")
+    phone: str = Field(pattern=r"^(?:\+7|8)\d{10}$")
     email: EmailStr
     # registr_date: datetime
 

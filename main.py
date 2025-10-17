@@ -13,23 +13,14 @@ templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse("main.html", {"request": request})
-
-
-# @app.get("/clients", tags=["Client"], summary="Получить клиентов")
-# def gets_clients(db: Session = Depends(get_db)):
-#     return db.query(Client).all()
-
-
-@app.get("/clients", response_class=HTMLResponse)
+@app.get(
+    "/clients",
+    tags=["Client"],
+    summary="Получить клиентов",
+    response_class=HTMLResponse,
+)
 def gets_clients(request: Request, db=Depends(get_db)):
-    cur = db[1]
-    conn = db[0]
-    sql = "SELECT * FROM client"
-    cur.execute(sql)
-    clients = cur.fetchall()
+    clients = db.query(Client).all()
     return templates.TemplateResponse(
         "client.html", {"request": request, "clients": clients}
     )
@@ -99,10 +90,17 @@ def update_client(
     db.refresh(client)
 
 
-@app.get("/product", tags=["Product"], summary="Получить продукты")
-def get_products(db: Session = Depends(get_db)):
-    product = db.query(Product).all()
-    return product
+@app.get(
+    "/product",
+    tags=["Product"],
+    summary="Получить продукты",
+    response_class=HTMLResponse,
+)
+def get_products(request: Request, db=Depends(get_db)):
+    products = db.query(Product).all()
+    return templates.TemplateResponse(
+        "product.html", {"request": request, "products": products}
+    )
 
 
 @app.get("/product/{product_id}", tags=["Product"], summary="Получить продукт")
@@ -169,9 +167,11 @@ def update_product(
 
 
 @app.get("/employee", tags=["Employee"], summary="Получить сотрудников")
-def get_employees(db: Session = Depends(get_db)):
+def get_employees(request: Request, db=Depends(get_db)):
     emp = db.query(Employee).all()
-    return emp
+    return templates.TemplateResponse(
+        "employee.html", {"request": request, "employees": emp}
+    )
 
 
 @app.get("/employee/{employee_id}", tags=["Employee"], summary="Получить сотрудника")

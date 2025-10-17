@@ -13,14 +13,26 @@ templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 
-# @app.get("/", response_class=HTMLResponse)
-# async def root(request: Request):
-#     return templates.TemplateResponse("main.html", {"request": request})
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("main.html", {"request": request})
 
 
-@app.get("/clients", tags=["Client"], summary="Получить клиентов")
-def gets_clients(db: Session = Depends(get_db)):
-    return db.query(Client).all()
+# @app.get("/clients", tags=["Client"], summary="Получить клиентов")
+# def gets_clients(db: Session = Depends(get_db)):
+#     return db.query(Client).all()
+
+
+@app.get("/clients", response_class=HTMLResponse)
+def gets_clients(request: Request, db=Depends(get_db)):
+    cur = db[1]
+    conn = db[0]
+    sql = "SELECT * FROM client"
+    cur.execute(sql)
+    clients = cur.fetchall()
+    return templates.TemplateResponse(
+        "client.html", {"request": request, "clients": clients}
+    )
 
 
 @app.get("/client/{client_id}", tags=["Client"], summary="Получить клиента")

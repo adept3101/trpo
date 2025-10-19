@@ -4,7 +4,7 @@ from models import Client, Product, Employee
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from datetime import date
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from schemas import ClientCreate, ProductCreate, EmployeeCreate
 
@@ -52,13 +52,26 @@ def add_client(client: ClientCreate, db: Session = Depends(get_db)):
     return new_client
 
 
-@app.delete("/client", tags=["Client"], summary="Удалить клиента")
-def delete_client(id: int, db: Session = Depends(get_db)):
-    client = db.scalar(select(Client).where(Client.client_id == id))
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
+# @app.delete("/client", tags=["Client"], summary="Удалить клиента")
+# def delete_client(id: int, db: Session = Depends(get_db)):
+#     client = db.scalar(select(Client).where(Client.client_id == id))
+#     if client is None:
+#         raise HTTPException(status_code=404, detail="Client not found")
+#     db.delete(client)
+#     db.commit()
+
+
+@app.post("/clients/delete/{client_id}")
+async def delete_client(client_id: int, db: Session = Depends(get_db)):
+    # client = db.query(Client).filter(Client.client_id == client_id).first()
+    client = db.scalar(select(Client).where(Client.client_id == client_id))
+    if not client:
+        raise HTTPException(status_code=404, detail="Клиент не найден")
+
     db.delete(client)
     db.commit()
+
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.put("/client", tags=["Client"], summary="Обновить клиента")
@@ -228,4 +241,3 @@ def update_emp(
     db.refresh(emp)
     db.commit()
     return emp
->>>>>>> 3

@@ -12,6 +12,10 @@ templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
+@app.get("/", response_class=HTMLResponse)
+def nav_page(request: Request):
+    return templates.TemplateResponse("nav.html", {"request": request})
+
 
 @app.get(
     "/clients",
@@ -71,7 +75,7 @@ async def delete_client(client_id: int, db: Session = Depends(get_db)):
     db.delete(client)
     db.commit()
 
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/clients", status_code=303)
 
 
 @app.put("/client", tags=["Client"], summary="Обновить клиента")

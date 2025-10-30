@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Form
 from db_config import get_db
 from models import Client, Product, Employee
 from sqlalchemy.future import select
@@ -7,10 +7,12 @@ from datetime import date
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from schemas import ClientCreate, ProductCreate, EmployeeCreate
+from typing import List
 
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
+
 
 @app.get("/", response_class=HTMLResponse)
 def nav_page(request: Request):
@@ -40,8 +42,8 @@ def get_client(id: int, db: Session = Depends(get_db)):
 
 @app.post("/client", tags=["Client"], summary="Добавить клиента")
 def add_client(client: ClientCreate, db: Session = Depends(get_db)):
-    existing = db.query(Client).filter(Client.email == client.email).first()
-    if existing:
+    cl = db.query(Client).filter(Client.email == client.email).first()
+    if cl:
         raise HTTPException(status_code=400, detail="Email is used")
 
     new_client = Client(
@@ -56,15 +58,6 @@ def add_client(client: ClientCreate, db: Session = Depends(get_db)):
     return new_client
 
 
-# @app.delete("/client", tags=["Client"], summary="Удалить клиента")
-# def delete_client(id: int, db: Session = Depends(get_db)):
-#     client = db.scalar(select(Client).where(Client.client_id == id))
-#     if client is None:
-#         raise HTTPException(status_code=404, detail="Client not found")
-#     db.delete(client)
-#     db.commit()
-
-
 @app.post("/clients/delete/{client_id}")
 async def delete_client(client_id: int, db: Session = Depends(get_db)):
     # client = db.query(Client).filter(Client.client_id == client_id).first()
@@ -76,6 +69,37 @@ async def delete_client(client_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return RedirectResponse(url="/clients", status_code=303)
+
+
+@app.post(
+    "/clients/delete_selected",
+    response_class=HTMLResponse,
+)
+def delete_clients(
+    selected_items: List[int] = Form(...), db: Session = Depends(get_db)
+):
+    # clients = db.query(Client).filter(Client.client_id.in_(selected_clients)).delete()
+    #
+    # if not clients:
+    #     raise HTTPException(status_code=404, detail="Клиенты не найдены")
+    #
+    # db.delete(clients)
+    # db.commit()
+    #
+    # return RedirectResponse(url="/clients", status_code=303)
+    try:
+        if not selected_items:
+            return RedirectResponse(url="/clients", status_code=303)
+
+        # Удаляем всех выбранных клиентов
+        db.query(Client).filter(Client.client_id.in_(selected_items)).delete()
+        db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url="/clients", status_code=303)
 
 
 @app.put("/client", tags=["Client"], summary="Обновить клиента")

@@ -40,6 +40,36 @@ def get_client(id: int, db: Session = Depends(get_db)):
     return res
 
 
+@app.post("/clients/add")
+def add_client_from_form(
+    request: Request,
+    name: str = Form(...),
+    lastname: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    existing_client = db.query(Client).filter(Client.email == email).first()
+    if existing_client:
+        clients = db.query(Client).all()
+        return templates.TemplateResponse(
+            "client.html",
+            {
+                "request": request,
+                "clients": clients,
+                "error": "Клиент с таким email уже существует",
+            },
+        )
+
+    new_client = Client(name=name, lastname=lastname, email=email, phone=phone)
+
+    db.add(new_client)
+    db.commit()
+    db.refresh(new_client)
+
+    return RedirectResponse(url="/clients", status_code=303)
+
+
 @app.post("/client", tags=["Client"], summary="Добавить клиента")
 def add_client(client: ClientCreate, db: Session = Depends(get_db)):
     cl = db.query(Client).filter(Client.email == client.email).first()
@@ -78,15 +108,6 @@ async def delete_client(client_id: int, db: Session = Depends(get_db)):
 def delete_clients(
     selected_items: List[int] = Form(...), db: Session = Depends(get_db)
 ):
-    # clients = db.query(Client).filter(Client.client_id.in_(selected_clients)).delete()
-    #
-    # if not clients:
-    #     raise HTTPException(status_code=404, detail="Клиенты не найдены")
-    #
-    # db.delete(clients)
-    # db.commit()
-    #
-    # return RedirectResponse(url="/clients", status_code=303)
     try:
         if not selected_items:
             return RedirectResponse(url="/clients", status_code=303)
@@ -97,7 +118,7 @@ def delete_clients(
 
         return RedirectResponse(url="/clients", status_code=303)
 
-    except Exception as e:
+    except:
         db.rollback()
         return RedirectResponse(url="/clients", status_code=303)
 

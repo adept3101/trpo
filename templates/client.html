@@ -6,44 +6,113 @@
 <div class="container">
   <h1 class="display-4">Клиенты</h1>
   <hr>
-  <form method="post" action="clients/delete_selected">
-    <button type="submit" class="btn btn-danger btn-sm">Удалить выбранных</button>
-  <table class="table table-hover" width="85%">
-    <thead class="thead-dark">
-      <tr>
-        <form method="post" action="/clients/add">
-          <button type="submit" class="btn">Добавить</button>
-        </form>
-        <th scope="col">client_id</th>
-        <th scope="col">name</th>
-        <th scope="col">lastname</th>
-        <th scope="col">email</th>
-        <th scope="col">registr_date</th>
-      </tr>
-    </thead>
-  <tbody>
-    {%for client in clients%}
-    <tr>
-      <td>{{client.client_id}}</td>
-      <td>{{client.name}}</td>
-      <td>{{client.lastname}}</td>
-      <td>{{client.email}}</td>
-      <td>{{client.registr_date}}</td>
-      <td><input type="checkbox" name="selected_items" value="{{ client.client_id }}"></td>
-      <td>
-        <form method="post" action="/clients/delete/{{ client.client_id }}" style="display: inline;">
-            <button type="submit" class="btn btn-danger btn-sm"
-                    onclick="return confirm('Удалить клиента {{ client.name }} {{ client.lastname }}?')">
-             Удалить 
-            </button>
-          </form>
-      </td>
-    </tr>
-    {%endfor%}
-    </tbody>
-  </table>
+
+  <!-- Кнопки управления -->
+  <div class="mb-3 d-flex gap-2">
+    <button type="button" id="selectAllBtn" class="btn btn-secondary btn-sm">Выбрать всех</button>
+    <form method="post" action="/clients/delete_selected" id="deleteSelectedForm" style="display: none;">
+      <button type="submit" id="deleteSelectedBtn" class="btn btn-danger btn-sm">
+        Удалить (<span id="selectedCount">0</span>)
+      </button>
+    </form>
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addClientModal">Добавить</button>
+  </div>
+
+  <form method="post" action="/clients/delete_selected">
+    <table class="table table-hover" width="85%">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">client_id</th>
+          <th scope="col">name</th>
+          <th scope="col">lastname</th>
+          <th scope="col">email</th>
+          <th scope="col">registr_date</th>
+          <th scope="col">Выбор</th>
+          <th scope="col">Действие</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+        <tr>
+          <td>{{ client.client_id }}</td>
+          <td>{{ client.name }}</td>
+          <td>{{ client.lastname }}</td>
+          <td>{{ client.email }}</td>
+          <td>{{ client.registr_date }}</td>
+          <td><input type="checkbox" name="selected_items" class="client-checkbox" value="{{ client.client_id }}"></td>
+          <td>
+            <form method="post" action="/clients/delete/{{ client.client_id }}" style="display: inline;">
+              <button type="submit" class="btn btn-danger btn-sm"
+                      onclick="return confirm('Удалить клиента {{ client.name }} {{ client.lastname }}?')">
+                Удалить
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </form>
+
+  <!-- Модальное окно добавления клиента -->
+  <div class="modal fade" id="addClientModal" tabindex="-1" role="dialog" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addClientModalLabel">Добавить нового клиента</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" action="/clients/add">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="name">Имя:</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+              <label for="lastname">Фамилия:</label>
+              <input type="text" class="form-control" id="lastname" name="lastname" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Телефон:</label>
+              <input type="tel" class="form-control" id="phone" name="phone" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Добавить клиента</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Скрипт управления выбором -->
+<script>
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const deleteForm = document.getElementById('deleteSelectedForm');
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  const selectedCount = document.getElementById('selectedCount');
+  const checkboxes = document.querySelectorAll('.client-checkbox');
+
+  let allSelected = false;
+
+  selectAllBtn.addEventListener('click', () => {
+    allSelected = !allSelected;
+    checkboxes.forEach(cb => cb.checked = allSelected);
+    updateSelection();
+    selectAllBtn.textContent = allSelected ? 'Снять выбор' : 'Выбрать всех';
+  });
+
+  checkboxes.forEach(cb => cb.addEventListener('change', updateSelection));
+
+  function updateSelection() {
+    const selected = document.querySelectorAll('.client-checkbox:checked').length;
+    selectedCount.textContent = selected;
+    deleteForm.style.display = selected > 0 ? 'inline-block' : 'none';
+  }
+</script>
 {% endblock %}
-
-

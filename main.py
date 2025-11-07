@@ -1,16 +1,22 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Form
 from db_config import get_db
 from models import Client, Product, Employee
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from datetime import date
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from schemas import ClientCreate, ProductCreate, EmployeeCreate
+from typing import List
 
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
+
+
+@app.get("/", response_class=HTMLResponse)
+def nav_page(request: Request):
+    return templates.TemplateResponse("nav.html", {"request": request})
 
 
 @app.get(
@@ -34,10 +40,40 @@ def get_client(id: int, db: Session = Depends(get_db)):
     return res
 
 
+@app.post("/clients/add")
+def add_client_from_form(
+    request: Request,
+    name: str = Form(...),
+    lastname: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    existing_client = db.query(Client).filter(Client.email == email).first()
+    if existing_client:
+        clients = db.query(Client).all()
+        return templates.TemplateResponse(
+            "client.html",
+            {
+                "request": request,
+                "clients": clients,
+                "error": "Клиент с таким email уже существует",
+            },
+        )
+
+    new_client = Client(name=name, lastname=lastname, email=email, phone=phone)
+
+    db.add(new_client)
+    db.commit()
+    db.refresh(new_client)
+
+    return RedirectResponse(url="/clients", status_code=303)
+
+
 @app.post("/client", tags=["Client"], summary="Добавить клиента")
 def add_client(client: ClientCreate, db: Session = Depends(get_db)):
-    existing = db.query(Client).filter(Client.email == client.email).first()
-    if existing:
+    cl = db.query(Client).filter(Client.email == client.email).first()
+    if cl:
         raise HTTPException(status_code=400, detail="Email is used")
 
     new_client = Client(
@@ -52,13 +88,39 @@ def add_client(client: ClientCreate, db: Session = Depends(get_db)):
     return new_client
 
 
-@app.delete("/client", tags=["Client"], summary="Удалить клиента")
-def delete_client(id: int, db: Session = Depends(get_db)):
-    client = db.scalar(select(Client).where(Client.client_id == id))
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
+@app.post("/clients/delete/{client_id}")
+async def delete_client(client_id: int, db: Session = Depends(get_db)):
+    # client = db.query(Client).filter(Client.client_id == client_id).first()
+    client = db.scalar(select(Client).where(Client.client_id == client_id))
+    if not client:
+        raise HTTPException(status_code=404, detail="Клиент не найден")
+
     db.delete(client)
     db.commit()
+
+    return RedirectResponse(url="/clients", status_code=303)
+
+
+@app.post(
+    "/clients/delete_selected",
+    response_class=HTMLResponse,
+)
+def delete_clients(
+    selected_items: List[int] = Form(...), db: Session = Depends(get_db)
+):
+    try:
+        if not selected_items:
+            return RedirectResponse(url="/clients", status_code=303)
+
+        # Удаляем всех выбранных клиентов
+        db.query(Client).filter(Client.client_id.in_(selected_items)).delete()
+        db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    except:
+        db.rollback()
+        return RedirectResponse(url="/clients", status_code=303)
 
 
 @app.put("/client", tags=["Client"], summary="Обновить клиента")
@@ -228,4 +290,3 @@ def update_emp(
     db.refresh(emp)
     db.commit()
     return emp
->>>>>>> 3

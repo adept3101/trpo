@@ -112,7 +112,6 @@ def delete_clients(
         if not selected_items:
             return RedirectResponse(url="/clients", status_code=303)
 
-        # Удаляем всех выбранных клиентов
         db.query(Client).filter(Client.client_id.in_(selected_items)).delete()
         db.commit()
 

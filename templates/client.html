@@ -7,7 +7,6 @@
   <h1 class="display-4">Клиенты</h1>
   <hr>
 
-  <!-- Кнопки управления -->
   <div class="mb-3 d-flex gap-2">
     <button type="button" id="selectAllBtn" class="btn btn-secondary btn-sm">Выбрать всех</button>
     <form method="post" action="/clients/delete_selected" id="deleteSelectedForm" style="display: none;">
@@ -31,6 +30,7 @@
           <th scope="col">Действие</th>
         </tr>
       </thead>
+      </form>
       <tbody>
         {% for client in clients %}
         <tr>
@@ -52,9 +52,7 @@
         {% endfor %}
       </tbody>
     </table>
-  </form>
 
-  <!-- Модальное окно добавления клиента -->
   <div class="modal fade" id="addClientModal" tabindex="-1" role="dialog" aria-labelledby="addClientModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -90,29 +88,80 @@
   </div>
 </div>
 
-<!-- Скрипт управления выбором -->
+<!-- <script> -->
+<!--   const selectAllBtn = document.getElementById('selectAllBtn'); -->
+<!--   const deleteForm = document.getElementById('deleteSelectedForm'); -->
+<!--   const deleteBtn = document.getElementById('deleteSelectedBtn'); -->
+<!--   const selectedCount = document.getElementById('selectedCount'); -->
+<!--   const checkboxes = document.querySelectorAll('.client-checkbox'); -->
+<!---->
+<!--   let allSelected = false; -->
+<!---->
+<!--   selectAllBtn.addEventListener('click', () => { -->
+<!--     allSelected = !allSelected; -->
+<!--     checkboxes.forEach(cb => cb.checked = allSelected); -->
+<!--     updateSelection(); -->
+<!--     selectAllBtn.textContent = allSelected ? 'Снять выбор' : 'Выбрать всех'; -->
+<!--   }); -->
+<!---->
+<!--   checkboxes.forEach(cb => cb.addEventListener('change', updateSelection)); -->
+<!---->
+<!--   function updateSelection() { -->
+<!--     const selected = document.querySelectorAll('.client-checkbox:checked').length; -->
+<!--     selectedCount.textContent = selected; -->
+<!--     deleteForm.style.display = selected > 0 ? 'inline-block' : 'none'; -->
+<!--   } -->
+<!-- </script> -->
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
   const selectAllBtn = document.getElementById('selectAllBtn');
-  const deleteForm = document.getElementById('deleteSelectedForm');
+  const deleteFormTop = document.getElementById('deleteSelectedForm');
   const deleteBtn = document.getElementById('deleteSelectedBtn');
-  const selectedCount = document.getElementById('selectedCount');
-  const checkboxes = document.querySelectorAll('.client-checkbox');
+  const selectedCountEl = document.getElementById('selectedCount');
+  const checkboxes = () => Array.from(document.querySelectorAll('.client-checkbox'));
 
   let allSelected = false;
 
   selectAllBtn.addEventListener('click', () => {
     allSelected = !allSelected;
-    checkboxes.forEach(cb => cb.checked = allSelected);
+    checkboxes().forEach(cb => cb.checked = allSelected);
     updateSelection();
     selectAllBtn.textContent = allSelected ? 'Снять выбор' : 'Выбрать всех';
   });
 
-  checkboxes.forEach(cb => cb.addEventListener('change', updateSelection));
+  document.addEventListener('change', (e) => {
+    if (e.target && e.target.classList.contains('client-checkbox')) {
+      updateSelection();
+    }
+  });
 
   function updateSelection() {
-    const selected = document.querySelectorAll('.client-checkbox:checked').length;
-    selectedCount.textContent = selected;
-    deleteForm.style.display = selected > 0 ? 'inline-block' : 'none';
+    const selected = checkboxes().filter(cb => cb.checked).length;
+    selectedCountEl.textContent = selected;
+    deleteFormTop.style.display = selected > 0 ? 'inline-block' : 'none';
   }
+
+  deleteFormTop.addEventListener('submit', (e) => {
+    const selectedCheckboxes = checkboxes().filter(cb => cb.checked);
+    if (selectedCheckboxes.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    const oldHidden = deleteFormTop.querySelectorAll('input[name="selected_items"]');
+    oldHidden.forEach(n => n.remove());
+
+    selectedCheckboxes.forEach(cb => {
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'selected_items';
+      hidden.value = cb.value;
+      deleteFormTop.appendChild(hidden);
+    });
+  });
+
+  updateSelection();
+});
 </script>
 {% endblock %}

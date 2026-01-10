@@ -15,7 +15,17 @@
       </button>
     </form>
     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addClientModal">Добавить</button>
+    
+    
+
   </div>
+  <div class="products-header">
+
+        <form class="search" method="get" action="/clients">
+            <input type="text" name="search" placeholder="Поиск" value="{{ request.query_params.get('search', '') }}">
+            <button type="submit">Поиск</button>
+        </form>
+    </div>
 
   <form method="post" action="/clients/delete_selected">
     <table class="table table-hover" width="85%">

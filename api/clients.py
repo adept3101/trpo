@@ -9,16 +9,10 @@ from typing import List
 
 templates = Jinja2Templates(directory="templates")
 
-router =  APIRouter(prefix='/client', tags=['Clients'])
-
-
-@router.get("/", response_class=HTMLResponse)
-def nav_page(request: Request):
-    return templates.TemplateResponse("nav.html", {"request": request})
-
+router =  APIRouter(prefix='/clients', tags=['Clients'])
 
 @router.get(
-    "/get",
+    "/",
     summary="Получить клиентов",
     response_class=HTMLResponse,
 

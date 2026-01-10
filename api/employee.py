@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="templates")
 
 router = APIRouter(prefix='/employee', tags=['Employees'])
 
-@router.get("/get", summary="Получить сотрудников")
+@router.get("/", summary="Получить сотрудников")
 def get_employees(request: Request, db=Depends(get_db)):
     emp = db.query(Employee).all()
     return templates.TemplateResponse(

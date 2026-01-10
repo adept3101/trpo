@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix='/product', tags=['Products'])
 
 @router.get(
-    "/get",
+    "/",
     summary="Получить продукты",
     response_class=HTMLResponse,
 )

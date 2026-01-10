@@ -1,6 +1,6 @@
 from fastapi import Response, HTTPException, Depends, APIRouter
 from schemas import UserCreate
-from cookie import security, config
+from auth.cookie import security, config
 from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
 from db import get_db

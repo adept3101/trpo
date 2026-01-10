@@ -2,6 +2,9 @@ from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 # import re
 
+class UserCreate(BaseModel):
+    login: str = Field(max_length=32, pattern=r"^[a-zA-Z](.[a-zA-Z0-9_-]*)$")
+    password: str = Field(max_length=32)
 
 class ClientCreate(BaseModel):
     name: str = Field(max_length=32, pattern=r"^[а-яА-Яa-zA-Z]+$")

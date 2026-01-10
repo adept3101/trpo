@@ -1,8 +1,15 @@
-from sqlalchemy import Column, Integer, Date, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Date, ForeignKey, DateTime, String
 from sqlalchemy.orm import Mapped, MappedColumn
 from db import Base
 from datetime import date, datetime
 
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, index=True, autoincrement=True)
+    login: Mapped[str] = MappedColumn(String)
+    hash_pass: Mapped[str] = MappedColumn(String)
+    registr_date = Column(DateTime(timezone=True), default=datetime.utcnow)
 
 class Client(Base):
     __tablename__ = "client"
@@ -12,7 +19,6 @@ class Client(Base):
     lastname: Mapped[str] = MappedColumn()
     phone: Mapped[str] = MappedColumn()
     email: Mapped[str] = MappedColumn()
-    registr_date = Column(DateTime(timezone=True), default=datetime.utcnow)
 
 
 class Product(Base):

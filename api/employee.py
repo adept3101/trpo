@@ -19,7 +19,7 @@ def get_employees(request: Request, db=Depends(get_db)):
     )
 
 
-@router.get("/get/{employee_id}", tags=["Employee"], summary="Получить сотрудника")
+@router.get("/get/{employee_id}", summary="Получить сотрудника")
 def get_employee(id: int, db: Session = Depends(get_db)):
     emp = db.query(Employee).filter(Employee.employee_id == id)
 

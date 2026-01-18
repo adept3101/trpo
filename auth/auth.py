@@ -1,4 +1,4 @@
-from fastapi import Response, HTTPException, Depends, APIRouter
+from fastapi import Response, HTTPException, Depends, APIRouter, Request, Form
 from schemas import UserCreate
 from auth.cookie import security, config
 from fastapi.security import OAuth2PasswordBearer
@@ -6,11 +6,12 @@ from typing import Annotated
 from db import get_db
 from models import User
 from sqlalchemy.orm import Session
-
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from argon2 import PasswordHasher
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
+templates = Jinja2Templates(directory="templates")
 
 ph = PasswordHasher()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -29,12 +30,19 @@ def verify_pass(password: str, hash_password: str) -> bool:
 async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"token": token}
 
+@router.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request":request})
 
 @router.post("/login")
-def login(creds: UserCreate, response: Response, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.login == creds.login).first()
-    # if creds.login == db.query(Users).filter(Users.login == login) and creds.password == "test":
-    if not user or not verify_pass(creds.password, user.password):
+def login(response: Response,
+    creds: UserCreate,
+    login: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+          ):
+    user = db.query(User).filter(User.login == login).first()
+    if not user or not verify_pass(password, user.password):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
     token = security.create_access_token(uid=str(user.id))
@@ -49,17 +57,20 @@ def login(creds: UserCreate, response: Response, db: Session = Depends(get_db)):
 # async def protected():
 #     return {"data": "TOP SECRET"}
 
+@router.get("/register", response_class=HTMLResponse)
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
 
 @router.post("/register")
-def register(reg: UserCreate, db: Session = Depends(get_db)):
+def register(reg: UserCreate = Form(...), db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.login == reg.login).first()
     if existing_user:
         raise HTTPException(
             status_code=400, detail="Пользователь с таким логином существует"
         )
 
-    hash_pass = ph.hash(reg.password)
-    new_usr = User(login=reg.login, password=hash_pass)
+    hash_ = ph.hash(reg.password)
+    new_usr = User(login=reg.login, hash_pass=hash_)
     db.add(new_usr)
     db.commit()
     db.refresh(new_usr)

@@ -3,6 +3,12 @@ from sqlalchemy.orm import Mapped, MappedColumn
 from db import Base
 from datetime import date, datetime
 
+class Roles(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = MappedColumn(String)
+
 class User(Base):
     __tablename__ = "user"
 
@@ -10,6 +16,8 @@ class User(Base):
     login: Mapped[str] = MappedColumn(String)
     hash_pass: Mapped[str] = MappedColumn(String)
     registr_date = Column(DateTime(timezone=True), default=datetime.utcnow)
+    role_id: Mapped[int] = MappedColumn(Integer, ForeignKey("roles.id"), default=2)
+
 
 class Client(Base):
     __tablename__ = "client"
@@ -19,6 +27,7 @@ class Client(Base):
     lastname: Mapped[str] = MappedColumn()
     phone: Mapped[str] = MappedColumn()
     email: Mapped[str] = MappedColumn()
+    # user_login: Mapped[str] = MappedColumn(String, ForeignKey=("user.login"))
 
 
 class Product(Base):

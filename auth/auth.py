@@ -6,7 +6,7 @@ from typing import Annotated
 from db import get_db
 from models import User
 from sqlalchemy.orm import Session
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from argon2 import PasswordHasher
 
@@ -74,4 +74,10 @@ def register(reg: UserCreate = Form(...), db: Session = Depends(get_db)):
     db.add(new_usr)
     db.commit()
     db.refresh(new_usr)
-    return new_usr
+    #return new_usr
+    # return RedirectResponse("/auth/login")
+    return RedirectResponse("/auth/login", status_code=303)
+
+# @router.get("/register")
+# def red():
+#     return RedirectResponse("/auth/login")

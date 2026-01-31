@@ -16,7 +16,7 @@ class User(Base):
     login: Mapped[str] = MappedColumn(String)
     hash_pass: Mapped[str] = MappedColumn(String)
     registr_date = Column(DateTime(timezone=True), default=datetime.utcnow)
-    role_id: Mapped[int] = MappedColumn(Integer, ForeignKey("roles.id"), default=2)
+    # role_id: Mapped[int] = MappedColumn(Integer, ForeignKey("roles.id"), default=2)
 
 
 class Client(Base):

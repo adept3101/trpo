@@ -36,18 +36,19 @@ def login_page(request: Request):
 
 @router.post("/login")
 def login(response: Response,
-    creds: UserCreate,
-    login: str = Form(...),
-    password: str = Form(...),
+    creds: UserCreate = Form(...),
+    # login: str = Form(...),
+    # password: str = Form(...),
     db: Session = Depends(get_db)
           ):
-    user = db.query(User).filter(User.login == login).first()
-    if not user or not verify_pass(password, user.password):
+    user = db.query(User).filter(User.login == creds.login).first()
+    if not user or not verify_pass(creds.password, user.hash_pass):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
     token = security.create_access_token(uid=str(user.id))
     response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
-    return {"access token": token}
+    # return {"access token": token}
+    return RedirectResponse("/nav", status_code=303)
 
 
 # @router.get(

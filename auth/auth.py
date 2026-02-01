@@ -6,7 +6,7 @@ from typing import Annotated
 from db import get_db
 from models import User
 from sqlalchemy.orm import Session
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from argon2 import PasswordHasher
 
@@ -50,14 +50,6 @@ def login(response: Response,
     # return {"access token": token}
     return RedirectResponse("/nav", status_code=303)
 
-
-# @router.get(
-#     "/protected",
-#     dependencies=[Depends(security.access_token_required)],
-# )
-# async def protected():
-#     return {"data": "TOP SECRET"}
-
 @router.get("/register", response_class=HTMLResponse)
 def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
@@ -79,6 +71,7 @@ def register(reg: UserCreate = Form(...), db: Session = Depends(get_db)):
     # return RedirectResponse("/auth/login")
     return RedirectResponse("/auth/login", status_code=303)
 
-# @router.get("/register")
-# def red():
-#     return RedirectResponse("/auth/login")
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
+    return RedirectResponse("/auth/login", status_code=303)
